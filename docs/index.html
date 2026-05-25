@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Trae Project</title>
+    <base href="/" />
+    <!-- 最早的安全脚本，确保在任何其他代码前执行 -->
+    <script>
+      // 立即替换 storage 对象，防止任何代码在我们替换前访问
+      (function() {
+        'use strict';
+        
+        // 创建安全的存储模拟对象
+        function createSafeStorage() {
+          var data = {};
+          return {
+            setItem: function(key, value) {
+              try {
+                data[key] = String(value);
+              } catch (e) {
+                console.warn('Storage setItem failed', e);
+              }
+            },
+            getItem: function(key) {
+              try {
+                return data.hasOwnProperty(key) ? data[key] : null;
+              } catch (e) {
+                console.warn('Storage getItem failed', e);
+                return null;
+              }
+            },
+            removeItem: function(key) {
+              try {
+                delete data[key];
+              } catch (e) {
+                console.warn('Storage removeItem failed', e);
+              }
+            },
+            clear: function() {
+              try {
+                data = {};
+              } catch (e) {
+                console.warn('Storage clear failed', e);
+              }
+            },
+            key: function(index) {
+              try {
+                var keys = Object.keys(data);
+                return keys[index] || null;
+              } catch (e) {
+                console.warn('Storage key failed', e);
+                return null;
+              }
+            },
+            get length() {
+              try {
+                return Object.keys(data).length;
+              } catch (e) {
+                console.warn('Storage length failed', e);
+                return 0;
+              }
+            }
+          };
+        }
+        
+        // 立即替换，不尝试访问真实的存储，直接使用安全版本
+        var safeLocalStorage = createSafeStorage();
+        var safeSessionStorage = createSafeStorage();
+        
+        // 使用 Object.defineProperty 进行安全替换
+        try {
+          Object.defineProperty(window, 'localStorage', {
+            value: safeLocalStorage,
+            writable: true,
+            configurable: true,
+            enumerable: true
+          });
+          
+          Object.defineProperty(window, 'sessionStorage', {
+            value: safeSessionStorage,
+            writable: true,
+            configurable: true,
+            enumerable: true
+          });
+          
+          console.log('安全存储已初始化');
+        } catch (e) {
+          console.error('无法替换存储对象:', e);
+        }
+      })();
+      
+      // 处理路由问题 - 在应用加载前规范化 URL 并模拟正确的路径
+      (function() {
+        'use strict';
+        
+        console.log('当前 URL:', window.location.href);
+        
+        // 保存原始的 history 方法
+        var originalReplaceState = window.history.replaceState;
+        var originalPushState = window.history.pushState;
+        
+        // 检查并修复 URL
+        function normalizeUrl() {
+          var pathname = window.location.pathname;
+          
+          console.log('当前路径:', pathname);
+          
+          // 如果 URL 包含 index.html，重定向到根路径
+          if (pathname === '/index.html' || pathname.endsWith('/index.html')) {
+            var newPath = pathname.replace('/index.html', '/');
+            if (newPath === '') newPath = '/';
+            
+            var newUrl = window.location.protocol + '//' + window.location.host + newPath + 
+                        window.location.search + window.location.hash;
+            
+            console.log('规范化 URL 到:', newUrl);
+            
+            // 使用 replaceState 来修改历史记录
+            try {
+              window.history.replaceState({}, '', newUrl);
+              console.log('URL 已通过 replaceState 规范化');
+            } catch (e) {
+              console.warn('replaceState 失败，尝试其他方法:', e);
+            }
+          }
+        }
+        
+        // 执行 URL 规范化
+        normalizeUrl();
+        
+        // 监听后续的导航事件
+        window.addEventListener('popstate', function() {
+          normalizeUrl();
+        });
+        
+        // 包装 history 方法，确保 URL 保持规范化
+        window.history.replaceState = function() {
+          normalizeUrl();
+          return originalReplaceState.apply(this, arguments);
+        };
+        
+        window.history.pushState = function() {
+          normalizeUrl();
+          return originalPushState.apply(this, arguments);
+        };
+        
+        console.log('路由规范化已就绪');
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/index-BIvBQkjC.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Bih4pgCf.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
